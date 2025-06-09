@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wordle Bot</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f3f4f6;
+        display: flex;
+        justify-content: center;
+        padding: 3rem;
+      }
+      .app {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 100%;
+      }
+      button {
+        background: #2563eb;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        margin-bottom: 1rem;
+      }
+      .guess {
+        display: flex;
+        justify-content: space-between;
+        font-family: monospace;
+        margin: 0.25rem 0;
+      }
+      .success {
+        color: green;
+        font-weight: bold;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>Wordle Bot</h1>
+      <button onclick="runBot()">Run Bot</button>
+      <div id="output"></div>
+      <p id="message" class="success"></p>
+    </div>
+
+    <script>
+      const WORD_LIST = [
+        "slate", "crane", "slant", "trace", "grate", "brine", "pride", "stone",
+        "plane", "flame", "glare", "shame", "blame", "grain", "brave", "clamp",
+        "plume", "grime", "spine", "shine", "brisk", "crisp", "shard", "smart",
+        "start", "stare", "crack", "speak", "creak", "steak", "swear", "sweat",
+        "swept", "sweet", "sleet", "fleet", "sheet", "spear", "clear", "clean"
+      ];
+
+      function getFeedback(guess, target) {
+        const feedback = Array(5).fill('');
+        const targetChars = target.split('');
+        for (let i = 0; i < 5; i++) {
+          if (guess[i] === target[i]) {
+            feedback[i] = 'g';
+            targetChars[i] = null;
+          }
+        }
+        for (let i = 0; i < 5; i++) {
+          if (feedback[i] === '') {
+            if (targetChars.includes(guess[i])) {
+              feedback[i] = 'y';
+              targetChars[targetChars.indexOf(guess[i])] = null;
+            } else {
+              feedback[i] = 'b';
+            }
+          }
+        }
+        return feedback.join('');
+      }
+
+      function filterWords(words, guess, feedback) {
+        return words.filter(word => {
+          for (let i = 0; i < 5; i++) {
+            if (feedback[i] === 'g' && word[i] !== guess[i]) return false;
+            if (feedback[i] === 'y' && (word[i] === guess[i] || !word.includes(guess[i]))) return false;
+            if (feedback[i] === 'b' && word.includes(guess[i]) && !feedback.includes('g')) return false;
+          }
+          return true;
+        });
+      }
+
+      function runBot() {
+        const output = document.getElementById("output");
+        const message = document.getElementById("message");
+        output.innerHTML = "";
+        message.textContent = "";
+
+        const target = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+        let possibleWords = [...WORD_LIST];
+        let guess = "slate";
+        let guesses = [];
+
+        for (let i = 0; i < 3; i++) {
+          const feedback = getFeedback(guess, target);
+          guesses.push({ guess, feedback });
+          if (feedback === "ggggg") break;
+          possibleWords = filterWords(possibleWords, guess, feedback);
+          guess = possibleWords[Math.floor(Math.random() * possibleWords.length)] || "";
+        }
+
+        guesses.forEach(g => {
+          const div = document.createElement("div");
+          div.className = "guess";
+          div.textContent = `${g.guess} → ${g.feedback}`;
+          output.appendChild(div);
+        });
+
+        if (guesses.at(-1).feedback === "ggggg") {
+          message.textContent = "✅ Solved!";
+        } else {
+          message.textContent = "❌ Failed to solve in 3 tries.";
+        }
+      }
+    </script>
+  </body>
+</html>
+
+
